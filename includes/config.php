@@ -1,9 +1,8 @@
 <?php
 
-define('maxmind_db_path','/var/www/ctracker/includes/GeoLite2-Country.mmdb');
-define('CDN', "http://$_SERVER[HTTP_HOST]/images/");
-define('SITE', "http://$_SERVER[HTTP_HOST]/");
-define('DIMENSION', '600x315');
-define('DBUSER', 'webserver');
-define('DBPASS', 'jmn6qcnrbdsa');
-define("URL", "http://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]");
+$dbconf = [
+	'url' => '@ds025849-a0.mlab.com:25849,ds025849-a1.mlab.com',
+	'dbname' => 'vmtraffic',
+	'user' => 'vmtraffic',
+	'pass' => 'XzxqTEVe'
+];
