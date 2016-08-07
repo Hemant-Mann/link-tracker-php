@@ -2,3 +2,4 @@ includes/config*
 includes/vendor/*
 
 sftp-config.json
+includes/config.php
