@@ -111,7 +111,7 @@ class Tracker {
 		try {
 			$id = new \MongoId($this->_id);
 			$link = $linkcol->findOne(['_id' => $id]);
-			if (!$link || $link['domain'] !== $_SERVER['HTTP_HOST']) {
+			if (!$link) {
 				return false;
 			} else {
 				$link = Utils::toObject($link);
@@ -131,8 +131,6 @@ class Tracker {
 			$arr = [
 				'title' => $ad->title,
 				'description' => $ad->description,
-				// 'image' => 'http://'. $this->_getDomain($link) .'/campaign/resize/'. base64_encode($ad->image) . '/' . $img['width'] . '/' . $img['height'],
-				//'image' => 'http://'. $this->_getDomain($link) .'/public/assets/uploads/images/'. $ad->image,
 				'image' => 'http://cdn.'. $_SERVER['HTTP_HOST'] ."/images/". $ad->image,
 				'width' => $img['width'],
 				'height' => $img['height'],
