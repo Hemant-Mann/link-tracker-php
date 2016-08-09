@@ -147,6 +147,31 @@ class Tracker {
 				return true;
 			}
 
+			//GA
+			$params = array(
+				'v' => 1,
+				'tid' => MGAID,
+				'cid' => $ckid,
+				't' => 'event',
+				'ec' => $ad->org_id,
+				'ea' => 'click',
+				'el' => $ad->user_id,
+				'promo1id' => $ad->_id,
+				'promo1nm' => $ad->title,
+				'promo1cr' => $link->user_id,
+				'promo1ps' => $_SERVER['HTTP_HOST']
+			);
+			
+			$curl = curl_init();
+			$gaurl = 'https://www.google-analytics.com/collect?'.http_build_query($params);
+			curl_setopt_array($curl, array(
+			    CURLOPT_RETURNTRANSFER => 1,
+			    CURLOPT_URL => $gaurl,
+			    CURLOPT_USERAGENT => $client->ua,
+			));
+			$resp = curl_exec($curl);
+			curl_close($curl);
+
 			$search = [
 				'adid' => $ad->_id,
 				'ipaddr' => $client->ip,
