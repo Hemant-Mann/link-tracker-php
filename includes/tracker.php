@@ -151,15 +151,21 @@ class Tracker {
 			$params = array(
 				'v' => 1,
 				'tid' => MGAID,
+				'ds' => $ad->user_id,
 				'cid' => $ckid,
-				't' => 'event',
-				'ec' => $ad->org_id,
-				'ea' => 'click',
-				'el' => $ad->user_id,
-				'promo1id' => $ad->_id,
-				'promo1nm' => $ad->title,
-				'promo1cr' => $link->user_id,
-				'promo1ps' => $_SERVER['HTTP_HOST']
+				'uip' => $client->ip,
+				'ua' => $client->ua,
+				'dr' => $client->referer,
+				'ci' => $ad->_id,
+				'cn' => $ad->title,
+				'cs' => $link->user_id,
+				'cm' => 'click',
+				'cc' => $ad->title,
+				't' => 'pageview',
+				'dl' => URL,
+				'dh' => $_SERVER['HTTP_HOST'],
+				'dp' => $_SERVER['REQUEST_URI'],
+				'dt' => $ad->title
 			);
 			
 			$curl = curl_init();
