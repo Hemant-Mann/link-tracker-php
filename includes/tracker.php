@@ -26,7 +26,7 @@ class Tracker {
 		self::connectDB();
 	}
 
-	protected static function connectDB() {
+	public static function connectDB() {
 		if (self::$_mongoDB) {
 			return self::$_mongoDB;
 		}
@@ -148,7 +148,41 @@ class Tracker {
 			}
 
 			//GA
-			$params = array(
+			$this->_ga($ad, $ckid, $client, $link);
+
+			$search = [
+				'adid' => $ad->_id,
+				'ipaddr' => $client->ip,
+				'referer' => $client->referer,
+				'country' => $client->country,
+				'cookie' => $ckid,
+				'pid' => $link->user_id	// It should be object
+			];
+			$record = $clickcol->findOne($search);
+			
+			if (!$record) {
+				// check for fraud by searching records on the basis
+				// of the ip of the user
+				$doc = array_merge($search, [
+					'ua' => $client->ua,
+					'device' => $client->device,
+					'created' => new \MongoDate(),
+					'is_bot' => true
+				]);
+				
+				$clickcol->insert($doc);
+				$this->linkObj->url = $fullUrl;
+				$this->linkObj->__id = $doc['_id'];
+				$this->linkObj->ad = false;
+			}
+			return true;
+		} catch (\Exception $e) {
+			return false;
+		}
+	}
+
+	protected function _ga($ad, $ckid, $client, $link) {
+		$params = array(
 				'v' => 1,
 				'tid' => MGAID,
 				'ds' => $ad->user_id,
@@ -177,36 +211,5 @@ class Tracker {
 			));
 			$resp = curl_exec($curl);
 			curl_close($curl);
-
-			$search = [
-				'adid' => $ad->_id,
-				'ipaddr' => $client->ip,
-				'referer' => $client->referer,
-				'country' => $client->country,
-				'cookie' => $ckid,
-				'pid' => $link->user_id	// It should be object
-			];
-			$record = $clickcol->findOne($search);
-			
-			if (!$record) {
-				// check for fraud by searching records on the basis
-				// of the ip of the user
-				$doc = array_merge($search, [
-					'ua' => $client->ua,
-					'device' => $client->device,
-					'created' => new \MongoDate(),
-					'is_bot' => true
-				]);
-
-				$this->linkObj->url = $fullUrl;
-				$this->linkObj->__id = $doc['_id'];
-				$this->linkObj->ad = false;
-
-				$clickcol->insert($doc);
-			}
-			return true;
-		} catch (\Exception $e) {
-			return false;
-		}
 	}
 }

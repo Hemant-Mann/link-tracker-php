@@ -2,6 +2,20 @@
 
 namespace Shared;
 class Utils {
+	public static function log($message = '') {
+		$logfile = "/var/www/html/includes/logs/" . date("Y-m-d") . ".txt";
+        $new = file_exists($logfile) ? false : true;
+        if ($handle = fopen($logfile, 'a')) {
+            $timestamp = strftime("%Y-%m-%d %H:%M:%S", time());
+            $content = "[{$timestamp}]{$message}\n";
+            fwrite($handle, $content);
+            fclose($handle);
+            if ($new) {
+                chmod($logfile, 0777);
+            }
+        }
+	}
+
 	public static function toObject($array) {
 		$result = new \stdClass();
 		foreach ($array as $key => $value) {
