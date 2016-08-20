@@ -153,8 +153,6 @@ class Tracker {
 			$search = [
 				'adid' => $ad->_id,
 				'ipaddr' => $client->ip,
-				'referer' => $client->referer,
-				'country' => $client->country,
 				'cookie' => $ckid,
 				'pid' => $link->user_id	// It should be object
 			];
@@ -165,7 +163,9 @@ class Tracker {
 				// of the ip of the user
 				$doc = array_merge($search, [
 					'ua' => $client->ua,
+					'referer' => $client->referer,
 					'device' => $client->device,
+					'country' => $client->country,
 					'created' => new \MongoDate(),
 					'is_bot' => true
 				]);
