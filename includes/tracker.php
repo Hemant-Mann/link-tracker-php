@@ -50,7 +50,7 @@ class Tracker {
 		$orgCol = $mongodb->selectCollection("organizations");
 		$org = $orgCol->findOne(['tdomains' => [
 			'$elemMatch' => ['$eq' => $host]
-		]]);
+		]], ['url']);
 		if ($org && isset($org['url'])) {
 			return $org['url'];
 		}
@@ -71,14 +71,29 @@ class Tracker {
 	}
 
 	protected function redirectUrl($link, $ad) {
-		$track = 'utm_term='. $link->_id;
 		$url = Utils::removeEmoji($ad->url);
 
 		$parsed = parse_url($url);
+		$query = []; $modify = false;
 		if (isset($parsed['query'])) {
-			$finalUrl = $url . "&utm_term=" . $link->_id;
+			parse_str($parsed['query'], $query);
 		} else {
-			$finalUrl = $url . "?utm_term=" . $link->_id;
+			$modify = true;
+		}
+
+		if (!(isset($query['utm_source']) || isset($query['utm_campaign']))) {
+			$modify = true;
+		}
+		if ($modify) {
+			$query['utm_source'] = sprintf('%s', $link->user_id);
+			$query['utm_medium'] = 'affiliate';
+			$query['utm_term'] = $this->_client->referer;
+			$query['utm_content'] = urlencode($ad->title);
+			$query['utm_campaign'] = sprintf('%s', $ad->_id);
+
+			$finalUrl = 'http://' . $parsed['host'] . $parsed['path'] . '?' . http_build_query($query);
+		} else {
+			$finalUrl = $url;
 		}
 
 		return $finalUrl;
@@ -110,7 +125,7 @@ class Tracker {
 		// check valid link and it's domain
 		try {
 			$id = new \MongoId($this->_id);
-			$link = $linkcol->findOne(['_id' => $id]);
+			$link = $linkcol->findOne(['_id' => $id], ['_id', 'user_id', 'domain', 'ad_id']);
 			if (!$link) {
 				return false;
 			} else {
@@ -118,7 +133,7 @@ class Tracker {
 			}
 
 			// find AD Details
-			$ad = $adcol->findOne(['_id' => $link->ad_id]);
+			$ad = $adcol->findOne(['_id' => $link->ad_id], ['_id', 'title', 'live', 'description', 'image', 'url', 'user_id']);
 			if (!$ad) return false;
 			$ad = Utils::toObject($ad);
 			$fullUrl = $this->redirectUrl($link, $ad);
