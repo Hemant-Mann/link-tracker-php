@@ -3,3 +3,5 @@ includes/vendor/*
 
 sftp-config.json
 includes/config.php
+
+.DS_Store

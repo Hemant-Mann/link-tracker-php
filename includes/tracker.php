@@ -51,8 +51,12 @@ class Tracker {
 		$org = $orgCol->findOne(['tdomains' => [
 			'$elemMatch' => ['$eq' => $host]
 		]], ['url']);
-		if ($org && isset($org['url'])) {
-			return $org['url'];
+		if ($org) {
+			if (isset($org['url'])) {
+				return $org['url'];	
+			} else {
+				return $org['domain'] . '.' . DOMAIN;
+			}
 		}
 		return DOMAIN;
 	}

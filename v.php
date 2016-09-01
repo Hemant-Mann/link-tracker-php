@@ -6,7 +6,7 @@ use Shared\Utils as Utils;
 header('Content-Type: image/gif');
 
 $startTime = microtime();
-Utils::log('Starting Request: ' . $startTime);
+// Utils::log('Starting Request: ' . $startTime);
 $url = dirname(__FILE__) . '/public/_blue.gif';
 
 $id = Utils::get('_id');

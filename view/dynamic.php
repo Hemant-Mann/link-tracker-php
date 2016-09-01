@@ -23,12 +23,19 @@
 </head>
 
 <body>
+<?php $divs = rand(1, 4); ?>
+<?php for ($i = 1; $i <= $divs; $i++) { ?>
+    <div>
+<?php } ?>
 <script type="text/javascript">
 (function () {
     var ad='<?php echo (int) $link->ad; ?>', _id='<?php echo $link->__id ?>', img=new Image();
     img.src = 'http://' + '<?php echo $_SERVER["HTTP_HOST"] ?>' + '/a/v/blue.gif' + '?' + 'a=' + ad + '&_id=' + _id;
 }());
 </script>
+<?php for ($i = 1; $i <= $divs; $i++) { ?>
+    </div>
+<?php } ?>
 <?php if (GAID): ?>
   <script>
     (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
