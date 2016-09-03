@@ -50,13 +50,9 @@ class Tracker {
 
 		$orgCol = $mongodb->selectCollection("organizations");
 		$linkCol = $mongodb->selectCollection("links");
-		$start = strtotime('now');
-		$org = $orgCol->findOne();
-		$end = strtotime('now');
-		var_dump($end - $start);
-		var_dump($org);
-		die('complete');
-
+		$org = $orgCol->findOne(['tdomains' => [
+			'$elemMatch' => ['$eq' => $host]
+		]]);
 		if ($org) {
 			if ($org['url']) {
 				return $org['url'];	
@@ -151,7 +147,7 @@ class Tracker {
 				'image' => 'http://cdn.'. $_SERVER['HTTP_HOST'] ."/images/". $ad->image,
 				'width' => $img['width'],
 				'height' => $img['height'],
-				'url' => Utils::removeEmoji($ad->url),
+				'url' => $fullUrl,
 				'subdomain' => $link->domain,
 				'ad' => true,
 				'__id' => $ad->_id
