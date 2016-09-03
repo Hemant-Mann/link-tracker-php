@@ -22,7 +22,6 @@ class Client {
 		$this->_ip = $this->getIP();
 		$this->_ua = $this->_server('HTTP_USER_AGENT', '');
 		$this->_ref = $this->_server('HTTP_REFERER', '');
-		// var_dump($this->_ref);
 
 		$this->_parser();
 		$this->_country = $this->_server('HTTP_CF_IPCOUNTRY', 'IN');

@@ -1,5 +1,6 @@
 <?php
 use Shared\Utils as Utils;
+require_once 'vendor/autoload.php';
 
 include 'cookie.php';
 include 'client.php';
@@ -21,9 +22,7 @@ class Tracker {
 		$this->_id = $id;
 		$this->_cookie = new Cookie();
 		$client = new Client();
-		$this->_client = $client->result;		
-
-		self::connectDB();
+		$this->_client = $client->result;
 	}
 
 	public static function connectDB() {
@@ -34,12 +33,14 @@ class Tracker {
 		global $dbconf;
 
 		$dbconf = (object) $dbconf;
-		$mongo = new \MongoClient("mongodb://".$dbconf->user.":".$dbconf->pass. $dbconf->url."/".$dbconf->dbname."?replicaSet=rs-ds025849");
-		$mongoDB = $mongo->selectDB($dbconf->dbname);
+		$mongodb = new MongoDB\Client("mongodb://" . $dbconf->user . ":" . $dbconf->pass . "@" . $dbconf->url ."/" .$dbconf->dbname . "?" . $dbconf->opts, [
+				'server' => [
+					'socketOptions' => [ 'connectTimeoutMS' => '300000', 'socketTimeoutMS' => '300000']
+				]
+			]);
+		self::$_mongoDB = $mongodb->selectDatabase($dbconf->dbname);
 
-		self::$_mongoDB = $mongoDB;
-
-		return $mongoDB;
+		return self::$_mongoDB;
 	}
 
 	public static function fallback() {
@@ -48,11 +49,16 @@ class Tracker {
 		$mongodb = self::connectDB();
 
 		$orgCol = $mongodb->selectCollection("organizations");
-		$org = $orgCol->findOne(['tdomains' => [
-			'$elemMatch' => ['$eq' => $host]
-		]], ['url']);
+		$linkCol = $mongodb->selectCollection("links");
+		$start = strtotime('now');
+		$org = $orgCol->findOne();
+		$end = strtotime('now');
+		var_dump($end - $start);
+		var_dump($org);
+		die('complete');
+
 		if ($org) {
-			if (isset($org['url'])) {
+			if ($org['url']) {
 				return $org['url'];	
 			} else {
 				return $org['domain'] . '.' . DOMAIN;
@@ -103,33 +109,20 @@ class Tracker {
 		return $finalUrl;
 	}
 
-	protected function _getDomain($link) {
-		if (property_exists($link, 'app') && $link->app) {
-			return $link->app . '.' . DOMAIN;
-		}
-		$uid = $link->user_id;
-		$userCol = self::$_mongoDB->selectCollection("users");
-		$orgCol = self::$_mongoDB->selectCollection("organizations");
-
-		$user = $userCol->findOne(['_id' => $uid], ['organization_id']);
-		if (!$user) {
-			return DOMAIN;
-		}
-		$org = $orgCol->findOne(['_id' => $user['organization_id']], ['domain']);
-
-		return $org['domain'] . '.' . DOMAIN;
-	}
-
 	public function process() {
-		$mongodb = self::$_mongoDB;
+		$mongodb = self::connectDB();
 		$adcol = $mongodb->selectCollection("ads");
 		$clickcol = $mongodb->selectCollection("clicks");
 		$linkcol = $mongodb->selectCollection("links");
 
 		// check valid link and it's domain
 		try {
-			$id = new \MongoId($this->_id); $client = $this->_client;
-			$link = $linkcol->findOne(['_id' => $id], ['_id', 'user_id', 'domain', 'ad_id']);
+			$id = new MongoDB\BSON\ObjectID($this->_id);
+			$link = $linkcol->findOne(['_id' => $id], [
+				'projection' => [
+					'_id' => 1, 'user_id' => 1, 'domain' => 1, 'ad_id' => 1
+				]
+			]);
 			if (!$link) {
 				return false;
 			} else {
@@ -137,13 +130,19 @@ class Tracker {
 			}
 
 			// find AD Details
-			$ad = $adcol->findOne(['_id' => $link->ad_id], ['_id', 'title', 'live', 'description', 'image', 'url', 'user_id']);
+			$ad = $adcol->findOne(['_id' => $link->ad_id], [
+				'projection' => [
+					'_id' => 1, 'title' => 1, 'live' => 1, 'description' => 1,
+					'image' => 1, 'url' => 1, 'user_id' => 1
+				]
+			]);
 			if (!$ad) return false;
 			$ad = Utils::toObject($ad);
 			$fullUrl = $this->redirectUrl($link, $ad);
 
 			$ckid = $this->_ckid();
-			
+			$client = $this->_client;
+
 			// Link is verified make the obj to be set in view
 			$img = ['width' => 600, 'height' => 315];
 			$arr = [
@@ -174,7 +173,7 @@ class Tracker {
 				'cookie' => $ckid,
 				'pid' => $link->user_id	// It should be object
 			];
-			$record = $clickcol->findOne($search);
+			$record = $clickcol->findOne($search, ['projection' => ['_id' => 1]]);
 			
 			if (!$record) {
 				// check for fraud by searching records on the basis
@@ -184,13 +183,13 @@ class Tracker {
 					'referer' => $client->referer,
 					'device' => $client->device,
 					'country' => $client->country,
-					'created' => new \MongoDate(),
+					'created' => new MongoDB\BSON\UTCDateTime(strtotime('now') * 1000),
 					'is_bot' => true
 				]);
 				
-				$clickcol->insert($doc);
+				$result = $clickcol->insertOne($doc);
 				$this->linkObj->url = $fullUrl;
-				$this->linkObj->__id = $doc['_id'];
+				$this->linkObj->__id = $result->getInsertedId();
 				$this->linkObj->ad = false;
 			}
 			return true;
@@ -201,33 +200,33 @@ class Tracker {
 
 	protected function _ga($ad, $ckid, $client, $link) {
 		$params = array(
-				'v' => 1,
-				'tid' => MGAID,
-				'ds' => $ad->user_id,
-				'cid' => $ckid,
-				'uip' => $client->ip,
-				'ua' => $client->ua,
-				'dr' => $client->referer,
-				'ci' => $ad->_id,
-				'cn' => $ad->title,
-				'cs' => $link->user_id,
-				'cm' => 'click',
-				'cc' => $ad->title,
-				't' => 'pageview',
-				'dl' => URL,
-				'dh' => $_SERVER['HTTP_HOST'],
-				'dp' => $_SERVER['REQUEST_URI'],
-				'dt' => $ad->title
-			);
-			
-			$curl = curl_init();
-			$gaurl = 'https://www.google-analytics.com/collect?'.http_build_query($params);
-			curl_setopt_array($curl, array(
-			    CURLOPT_RETURNTRANSFER => 1,
-			    CURLOPT_URL => $gaurl,
-			    CURLOPT_USERAGENT => $client->ua,
-			));
-			$resp = curl_exec($curl);
-			curl_close($curl);
+			'v' => 1,
+			'tid' => MGAID,
+			'ds' => $ad->user_id,
+			'cid' => $ckid,
+			'uip' => $client->ip,
+			'ua' => $client->ua,
+			'dr' => $client->referer,
+			'ci' => $ad->_id,
+			'cn' => $ad->title,
+			'cs' => $link->user_id,
+			'cm' => 'click',
+			'cc' => $ad->title,
+			't' => 'pageview',
+			'dl' => URL,
+			'dh' => $_SERVER['HTTP_HOST'],
+			'dp' => $_SERVER['REQUEST_URI'],
+			'dt' => $ad->title
+		);
+		
+		$curl = curl_init();
+		$gaurl = 'https://www.google-analytics.com/collect?'.http_build_query($params);
+		curl_setopt_array($curl, array(
+		    CURLOPT_RETURNTRANSFER => 1,
+		    CURLOPT_URL => $gaurl,
+		    CURLOPT_USERAGENT => $client->ua,
+		));
+		$resp = curl_exec($curl);
+		curl_close($curl);
 	}
 }

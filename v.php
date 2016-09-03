@@ -2,11 +2,11 @@
 require_once 'includes/tracker.php';
 require_once 'includes/cookie.php';
 require_once 'includes/autoloader.php';
+require_once 'includes/vendor/autoload.php';
+
 use Shared\Utils as Utils;
 header('Content-Type: image/gif');
 
-$startTime = microtime();
-// Utils::log('Starting Request: ' . $startTime);
 $url = dirname(__FILE__) . '/public/_blue.gif';
 
 $id = Utils::get('_id');
@@ -23,12 +23,10 @@ if (!$id || $isAd || !$ckid || !preg_match('#^http://'.$host.'/([A-Za-z0-9]+)$#'
 
 $clickCol = Tracker::connectDB()->selectCollection("clicks");
 try {
-	$clickCol->update(['_id' => new \MongoId($id)], ['$set' => ['is_bot' => false]]);
+	$clickCol->updateOne(['_id' => new MongoDB\BSON\ObjectID($id)], ['$set' => ['is_bot' => false]]);
 } catch (\Exception $e) {
 	// do something
 }
-$endTime = microtime();
-// Utils::log('id: ' . $id . ' Time taken: ' . ($endTime - $startTime));
 
 echo file_get_contents($url);
 

@@ -5,3 +5,5 @@ sftp-config.json
 includes/config.php
 
 .DS_Store
+
+includes/old.config.php
