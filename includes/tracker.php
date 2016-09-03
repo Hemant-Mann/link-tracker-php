@@ -34,7 +34,7 @@ class Tracker {
 		global $dbconf;
 
 		$dbconf = (object) $dbconf;
-		$mongo = new \MongoClient("mongodb://".$dbconf->user.":".$dbconf->pass. $dbconf->url.":25849/".$dbconf->dbname."?replicaSet=rs-ds025849");
+		$mongo = new \MongoClient("mongodb://".$dbconf->user.":".$dbconf->pass. $dbconf->url."/".$dbconf->dbname."?replicaSet=rs-ds025849");
 		$mongoDB = $mongo->selectDB($dbconf->dbname);
 
 		self::$_mongoDB = $mongoDB;
@@ -128,7 +128,7 @@ class Tracker {
 
 		// check valid link and it's domain
 		try {
-			$id = new \MongoId($this->_id);
+			$id = new \MongoId($this->_id); $client = $this->_client;
 			$link = $linkcol->findOne(['_id' => $id], ['_id', 'user_id', 'domain', 'ad_id']);
 			if (!$link) {
 				return false;
@@ -143,8 +143,7 @@ class Tracker {
 			$fullUrl = $this->redirectUrl($link, $ad);
 
 			$ckid = $this->_ckid();
-			$client = $this->_client;
-
+			
 			// Link is verified make the obj to be set in view
 			$img = ['width' => 600, 'height' => 315];
 			$arr = [
