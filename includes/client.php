@@ -16,6 +16,10 @@ class Client {
 
 	protected $_country;
 
+	protected $_browser;
+
+	protected $_os;
+
 	public $result;
 
 	public function __construct() {
@@ -32,7 +36,9 @@ class Client {
 			'referer' => $this->_ref,
 			'device' => $this->_device,
 			'country' => $this->_country,
-			'bot' => $this->_bot
+			'bot' => $this->_bot,
+			'browser' => $this->_browser,
+			'os' => $this->_os
 		];
 
 		$this->result = (object) $ans;
@@ -54,6 +60,9 @@ class Client {
 	protected function _parser() {
 		$parser = Parser::create();
 		$result = $parser->parse($this->_ua);
+
+		$this->_browser = $result->ua->family;
+		$this->_os = $result->os->family;
 
 		if ($result->device->family == "Spider" || preg_match('/bot|googlebot|crawler|spider|robot|crawling|curl/i', $this->_ua)) {
 			$this->_bot = true;

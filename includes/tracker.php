@@ -174,14 +174,24 @@ class Tracker {
 			if (!$record) {
 				// check for fraud by searching records on the basis
 				// of the ip of the user
+				if ($client->referer) {
+					$ref = parse_url($client->referer, PHP_URL_HOST);
+				} else {
+					$ref = $client->referer;
+				}
+
 				$doc = array_merge($search, [
-					'ua' => $client->ua,
-					'referer' => $client->referer,
+					'browser' => $client->browser,
+					'referer' => $ref,
 					'device' => $client->device,
 					'country' => $client->country,
 					'created' => new MongoDB\BSON\UTCDateTime(strtotime('now') * 1000),
 					'is_bot' => true
 				]);
+
+				if ($client->os) {
+					$doc['os'] = $client->os;
+				}
 				
 				$result = $clickcol->insertOne($doc);
 				$this->linkObj->url = $fullUrl;
