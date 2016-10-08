@@ -110,6 +110,7 @@ class Tracker {
 		$adcol = $mongodb->selectCollection("ads");
 		$clickcol = $mongodb->selectCollection("clicks");
 		$linkcol = $mongodb->selectCollection("links");
+		$commCol = $mongodb->selectCollection("commissions");
 
 		// check valid link and it's domain
 		try {
@@ -133,6 +134,7 @@ class Tracker {
 				]
 			]);
 			if (!$ad) return false;
+
 			$ad = Utils::toObject($ad);
 			$fullUrl = $this->redirectUrl($link, $ad);
 
@@ -150,8 +152,14 @@ class Tracker {
 				'url' => $fullUrl,
 				'subdomain' => $link->domain,
 				'ad' => true,
-				'__id' => $ad->_id
+				'__id' => $ad->_id,
+				'cookie' => null
 			];
+
+			$comm = $commCol->count(['model' => Utils::mongoRegex('cpi|cpa'), 'ad_id' => $link->ad_id]);
+			if ($comm !== 0) {
+				$arr['cookie'] = $ckid;
+			}
 			$this->linkObj = Utils::toObject($arr);
 
 			// If visitor is valid

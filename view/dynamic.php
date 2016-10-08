@@ -23,6 +23,12 @@
 </head>
 
 <body>
+<?php if ($link->cookie): ?>
+    <script type="text/javascript">
+        var img = new Image();
+        img.src = 'http://track.<?php echo DOMAIN; ?>/pixel?ckid=<?php echo $link->cookie; ?>';
+    </script>
+<?php endif ?>
 <?php $divs = rand(1, 4); ?>
 <?php for ($i = 1; $i <= $divs; $i++) { ?>
     <div>

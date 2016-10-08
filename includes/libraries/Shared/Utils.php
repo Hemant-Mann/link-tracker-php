@@ -65,7 +65,16 @@ class Utils {
 	    return $clean_text;
 	}
 
-	public static function getMongoId($value) {
-		return $value->{'$id'};
+	public static function getMongoId($field) {
+		if (is_object($field)) {
+			$id = sprintf('%s', $field);
+		} else {
+			$id = $field;
+		}
+		return $id;
+	}
+
+	public static function mongoRegex($val) {
+		return new \MongoDB\BSON\Regex($val, 'i');
 	}
 }
