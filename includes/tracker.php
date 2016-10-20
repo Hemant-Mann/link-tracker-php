@@ -76,7 +76,7 @@ class Tracker {
 		return $ckid;
 	}
 
-	protected function redirectUrl($link, $ad) {
+	protected function redirectUrl($link, $ad, $click = null) {
 		$url = Utils::removeEmoji($ad->url);
 
 		$parsed = parse_url($url);
@@ -94,7 +94,13 @@ class Tracker {
 			$query['utm_source'] = sprintf('%s', $link->user_id);
 			$query['utm_medium'] = 'affiliate';
 			$query['utm_term'] = $this->_client->referer;
-			$query['utm_content'] = urlencode($ad->title);
+
+			if (is_object($click) && property_exists($click, '_id')) {
+				$query['utm_content'] = Utils::getMongoId($click->_id);
+			} else {
+				$query['utm_content'] = urlencode($ad->title);
+			}
+			
 			$query['utm_campaign'] = sprintf('%s', $ad->_id);
 
 			$finalUrl = 'http://' . $parsed['host'] . $parsed['path'] . '?' . http_build_query($query);
@@ -145,7 +151,7 @@ class Tracker {
 			$img = ['width' => 600, 'height' => 315];
 			$arr = [
 				'title' => $ad->title,
-				'description' => $ad->description,
+				'description' => $ad->description ?? $ad->title,
 				'image' => 'http://cdn.'. $_SERVER['HTTP_HOST'] ."/images/". $ad->image,
 				'width' => $img['width'],
 				'height' => $img['height'],
@@ -202,9 +208,13 @@ class Tracker {
 				}
 				
 				$result = $clickcol->insertOne($doc);
-				$this->linkObj->url = $fullUrl;
 				$this->linkObj->__id = $result->getInsertedId();
+				$insertedObj = Utils::toObject(['_id' => $this->linkObj->__id]);
+				$this->linkObj->url = $this->redirectUrl($link, $ad, $insertedObj);
 				$this->linkObj->ad = false;
+			} else {
+				$insertedObj = Utils::toObject($record);
+				$this->linkObj->url = $this->redirectUrl($link, $ad, $insertedObj);
 			}
 			return true;
 		} catch (\Exception $e) {

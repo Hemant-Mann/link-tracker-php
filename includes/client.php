@@ -85,15 +85,17 @@ class Client {
 		$ipaddress = '';
 		if ($this->_server('HTTP_CLIENT_IP'))
 		    $ipaddress = $this->_server('HTTP_CLIENT_IP');
-		else if($this->_server('HTTP_X_FORWARDED_FOR'))
+		else if ($this->_server('HTTP_CF_CONNECTING_IP'))
+			$ipaddress = $this->_server('HTTP_CF_CONNECTING_IP');
+		else if ($this->_server('HTTP_X_FORWARDED_FOR'))
 		    $ipaddress = $this->_server('HTTP_X_FORWARDED_FOR');
-		else if($this->_server('HTTP_X_FORWARDED'))
+		else if ($this->_server('HTTP_X_FORWARDED'))
 		    $ipaddress = $this->_server('HTTP_X_FORWARDED');
-		else if($this->_server('HTTP_FORWARDED_FOR'))
+		else if ($this->_server('HTTP_FORWARDED_FOR'))
 		    $ipaddress = $this->_server('HTTP_FORWARDED_FOR');
-		else if($this->_server('HTTP_FORWARDED'))
+		else if ($this->_server('HTTP_FORWARDED'))
 		    $ipaddress = $this->_server('HTTP_FORWARDED');
-		else if($this->_server('REMOTE_ADDR'))
+		else if ($this->_server('REMOTE_ADDR'))
 		    $ipaddress = $this->_server('REMOTE_ADDR');
 		else
 		    $ipaddress = 'UNKNOWN';

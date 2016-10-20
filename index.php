@@ -1,4 +1,6 @@
 <?php
+
+// Remember to Add 'X-Frame-Options' to 'DENY' in nginx conf
 date_default_timezone_set('Asia/Kolkata');
 require_once 'includes/config.constants.php';
 require_once 'includes/autoloader.php';
