@@ -1,7 +1,7 @@
 <?php
 
 class Cookie {
-	protected $_prefix = "__vmtraffic";
+	protected $_prefix = "__vnative";
 
 	protected $_domain;
 

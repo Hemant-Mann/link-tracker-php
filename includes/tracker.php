@@ -1,5 +1,6 @@
 <?php
 use Shared\Utils as Utils;
+use Shared\Db as Db;
 require_once 'vendor/autoload.php';
 
 include 'cookie.php';
@@ -35,7 +36,7 @@ class Tracker {
 		$dbconf = (object) $dbconf;
 		$mongodb = new MongoDB\Client("mongodb://" . $dbconf->user . ":" . $dbconf->pass . "@" . $dbconf->url ."/" .$dbconf->dbname . "?" . $dbconf->opts, [
 				'server' => [
-					'socketOptions' => [ 'connectTimeoutMS' => '300000', 'socketTimeoutMS' => '300000']
+					'socketOptions' => [ 'connectTimeoutMS' => '300000', 'socketTimeoutMS' => '300000' ]
 				]
 			]);
 		self::$_mongoDB = $mongodb->selectDatabase($dbconf->dbname);
@@ -120,7 +121,7 @@ class Tracker {
 
 		// check valid link and it's domain
 		try {
-			$id = new MongoDB\BSON\ObjectID($this->_id);
+			$id = Db::convertType($this->_id, 'id');
 			$link = $linkcol->findOne(['_id' => $id], [
 				'projection' => [
 					'_id' => 1, 'user_id' => 1, 'domain' => 1, 'ad_id' => 1
@@ -199,12 +200,18 @@ class Tracker {
 					'referer' => $ref,
 					'device' => $client->device,
 					'country' => $client->country,
-					'created' => new MongoDB\BSON\UTCDateTime(strtotime('now') * 1000),
+					'created' => Db::time(),
 					'is_bot' => true
 				]);
 
 				if ($client->os) {
 					$doc['os'] = $client->os;
+				}
+
+				// If extra Param
+				$p1 = Utils::get('p1'); $p2 = Utils::get('p2');
+				if ($p1 && $p2) {
+					$doc['p1'] = $p1; $doc['p2'] = $p2;
 				}
 				
 				$result = $clickcol->insertOne($doc);

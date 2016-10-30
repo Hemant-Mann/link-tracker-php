@@ -29,7 +29,7 @@ class Utils {
 
 	public static function get($key, $default = null) {
 		if (isset($_GET[$key])) {
-		    return $_GET[$key];
+		    return htmlentities($_GET[$key]);
 		}
 		return $default;
 	}
@@ -76,5 +76,24 @@ class Utils {
 
 	public static function mongoRegex($val) {
 		return new \MongoDB\BSON\Regex($val, 'i');
+	}
+
+	public static function mongoObjectId($id) {
+		$result = "";
+		if (is_array($id)) {
+			$result = [];
+			foreach ($id as $i) {
+				$result[] = self::mongoObjectId($i);
+			}
+		} else if (!Db::isType($id, 'id')) {
+			if (strlen($id) === 24) {
+				$result = new \MongoDB\BSON\ObjectID($id);	
+			} else {
+				$result = "";
+			}
+        } else {
+        	$result = $id;
+        }
+        return $result;
 	}
 }

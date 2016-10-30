@@ -16,7 +16,8 @@ $ckid = $cookie->get('tracking');
 
 $ref = Utils::server('HTTP_REFERER');
 $host = Utils::server('HTTP_HOST'); $host = preg_quote($host, ".");
-if (!$id || $isAd || !$ckid || !preg_match('#^http://'.$host.'/([A-Za-z0-9]+)$#', $ref)) { // go to hell
+
+if (!$id || $isAd || !$ckid || !preg_match('#^http://'.$host.'/([A-Za-z0-9]{24})#', $ref)) { // go to hell
 	echo file_get_contents($url);
 	return;
 }

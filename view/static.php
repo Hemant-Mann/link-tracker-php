@@ -5,7 +5,7 @@
     <meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
     <meta property="og:locale" content="en_US">
     <meta property="og:type" content="article">
-    <meta property="og:title" content="VMTraffic" />
+    <meta property="og:title" content="vNative" />
     <meta property="og:description" content="A network for real publishers developed by <?php echo DOMAIN; ?>">
     <meta property="og:url" content="<?php echo URL;?>">
     <meta property="og:image" content="http://<?php echo DOMAIN;?>/public/logo.png">
