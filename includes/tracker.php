@@ -79,37 +79,20 @@ class Tracker {
 
 	protected function redirectUrl($link, $ad, $click = null) {
 		$url = Utils::removeEmoji($ad->url);
+		$url = html_entity_decode($url);
 
-		$parsed = parse_url($url);
-		$query = []; $modify = false;
+		$parsed = parse_url($url); $query = [];
 		if (isset($parsed['query'])) {
 			parse_str($parsed['query'], $query);
-		} else {
-			$modify = true;
 		}
-
-		if (!(isset($query['utm_source']) || isset($query['utm_campaign']))) {
-			$modify = true;
+		
+		$allowedParams = ['aff_id' => Utils::getMongoId($link->user_id), 'ad_id' => Utils::getMongoId($ad->_id), 'adv_id' => Utils::getMongoId($ad->user_id), 'tdomain' => Utils::server('HTTP_HOST')];
+		if (is_object($click) && property_exists($click, '_id')) {
+			$allowedParams['click_id'] = Utils::getMongoId($click->_id);
 		}
-		if ($modify) {
-			$query['utm_source'] = sprintf('%s', $link->user_id);
-			$query['utm_medium'] = 'affiliate';
-			$query['utm_term'] = $this->_client->referer;
+		$query = Utils::queryParams($query, $allowedParams);
 
-			if (is_object($click) && property_exists($click, '_id')) {
-				$query['utm_content'] = Utils::getMongoId($click->_id);
-			} else {
-				$query['utm_content'] = urlencode($ad->title);
-			}
-			
-			$query['utm_campaign'] = sprintf('%s', $ad->_id);
-
-			$finalUrl = 'http://' . $parsed['host'] . $parsed['path'] . '?' . http_build_query($query);
-		} else {
-			$finalUrl = $url;
-		}
-
-		return $finalUrl;
+		return Utils::makeUrl($parsed, $query);
 	}
 
 	public function process() {

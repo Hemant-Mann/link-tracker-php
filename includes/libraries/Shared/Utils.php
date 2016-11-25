@@ -96,4 +96,35 @@ class Utils {
         }
         return $result;
 	}
+
+	public static function queryParams($arr, $allowedParams = []) {
+		$result = $arr;
+
+		foreach ($arr as $key => $value) {
+		    preg_match("/\{([a-z_]+)\}/", $value, $matches);
+		    $param = $matches[1] ?? '';
+		   
+		    if ($param) {
+		    	if (isset($allowedParams[$param])) {
+		    		$result[$key] = $allowedParams[$param];	
+		    	} else {
+		    		unset($result[$key]);
+		    	}
+		    }
+		}
+		return $result;
+	}
+
+	public static function makeUrl($parsed, $query) {
+		$finalUrl = ($parsed['scheme'] ?? 'http') . '://' . $parsed['host'] . ($parsed['path'] ?? '/');
+
+		if (count($query) > 0) {
+			$finalUrl .= "?" . http_build_query($query);
+		}
+
+		if (isset($parsed["fragment"])) {
+			$finalUrl .= "#" . $parsed["fragment"];
+		}
+		return $finalUrl;
+	}
 }
